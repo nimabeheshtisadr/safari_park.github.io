@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8">
+  <title>چرخ شانس سافاری</title>
+  <style>
+    body {
+      font-family: 'B Nazanin', sans-serif;
+      text-align: center;
+      background: #f0f0f0;
+      direction: rtl;
+    }
+
+    h2 {
+      font-family: 'B Nazanin';
+      line-height: 1.8;
+      margin-top: 20px;
+    }
+
+    canvas {
+      margin-top: 10px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    #spin {
+      margin-top: 20px;
+      padding: 10px 30px;
+      font-size: 18px;
+      background: #2e8b57;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>
+    🎁 فالو کن، برنده شو! 🎁<br>
+    سافاری پارک چالیدره
+  </h2>
+
+  <canvas id="wheel" width="500" height="500"></canvas>
+  <br>
+  <button id="spin">بچرخون!</button>
+
+  <script>
+    const items = [
+      { name: 'کارتینگ', count: 1 },
+      { name: '30.000', count: 30 },
+      { name: '50.000', count: 2 },
+      { name: 'کارگاه خلاق', count: 1 },
+      { name: 'باگی', count: 1 },
+      { name: 'فیش اسپا', count: 1 },
+      { name: '40.000', count: 2 },
+      { name: 'قایق', count: 1 },
+      { name: 'ترامپولین', count: 1 },
+      { name: 'کلبه وحشت', count: 1 },
+      { name: 'زیپ لاین', count: 1 },
+      { name: '100.000', count: 2 }
+    ];
+
+    const segments = items.flatMap(item => Array(item.count).fill(item.name));
+    const colors = [...Array(segments.length)].map((_, i) =>
+      `hsl(${Math.floor(360 * i / segments.length)}, 70%, 60%)`
+    );
+
+    const canvas = document.getElementById('wheel');
+    const ctx = canvas.getContext('2d');
+    const spinBtn = document.getElementById('spin');
+    let angle = 0, isSpinning = false;
+
+    const logo = new Image();
+    logo.src = 'logo.png';
+
+    function drawWheel() {
+      const radius = canvas.width / 2;
+      const angleStep = (2 * Math.PI) / segments.length;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(radius, radius);
+      ctx.rotate(angle);
+
+      segments.forEach((text, i) => {
+        ctx.beginPath();
+        ctx.fillStyle = colors[i];
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, radius, i * angleStep, (i + 1) * angleStep);
+        ctx.fill();
+
+        ctx.save();
+        ctx.rotate((i + 0.3) * angleStep);
+        ctx.translate(radius * 0.9, 0);
+        ctx.fillStyle = "#000";
+        ctx.rotate(-angleStep / 2);
+        ctx.fillText(text, -ctx.measureText(text).width / 3, 5);
+        ctx.restore();
+      });
+
+      ctx.restore();
+
+      if (logo.complete) {
+        const logoSize = 150;
+        ctx.drawImage(logo, radius - logoSize / 2, radius - logoSize / 2, logoSize, logoSize);
+      } else {
+        logo.onload = drawWheel;
+      }
+    }
+
+    function spinWheel() {
+      if (isSpinning) return;
+      isSpinning = true;
+      let spinAngle = Math.random() * 360 + 720;
+      const duration = 4000;
+      const start = performance.now();
+
+      function animate(time) {
+        let t = (time - start) / duration;
+        if (t > 1) t = 1;
+        angle += (spinAngle * (1 - Math.pow(t - 1, 3))) * Math.PI / 180;
+        drawWheel();
+        if (t < 1) requestAnimationFrame(animate);
+        else {
+          isSpinning = false;
+          const selected = Math.floor(((angle % (2 * Math.PI)) / (2 * Math.PI)) * segments.length);
+          alert("🎉 برنده شدی: " + segments[(segments.length - selected) % segments.length]);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    drawWheel();
+    spinBtn.addEventListener('click', spinWheel);
+  </script>
+</body>
+</html>
