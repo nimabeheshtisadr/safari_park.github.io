@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8" />
+  <title>چرخ شانس - Safari Chalidare</title>
+  <style>
+    @font-face {
+      font-family: 'Vazirmatn';
+      src: url('https://cdn.fontcdn.ir/Font/Persian/Vazirmatn/Vazirmatn-Regular.woff2') format('woff2');
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #fff3e0;
+      font-family: 'Vazirmatn', sans-serif;
+    }
+    h2 {
+      font-size: 28px;
+      margin: 10px;
+      color: #333;
+    }
+    canvas {
+      background: none;
+    }
+    button {
+      margin-top: 20px;
+      font-family: 'Vazirmatn', sans-serif;
+      font-size: 20px;
+      padding: 10px 25px;
+      border: none;
+      border-radius: 12px;
+      background: #f57c00;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎁 !فالو کن، بچرخون، برنده شو 🎁</h2>
+  <canvas id="wheelCanvas" width="500" height="500"></canvas>
+  <button onclick="spinWheel()">بچرخون </button>
+
+  <!-- صدای چرخش -->
+  <audio id="spinSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_272cfa96d4.mp3"></audio>
+
+  <script>
+    const canvas = document.getElementById("wheelCanvas");
+    const ctx = canvas.getContext("2d");
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = 180;
+    const spinSound = document.getElementById("spinSound");
+
+    const segments = [
+      "30.000",
+      "کارتینگ",
+      "زیپ لاین",
+      "قایق",
+      "50.000",
+      "100.000"
+    ];
+
+    const anglePerSegment = (2 * Math.PI) / segments.length;
+    let startAngle = 0;
+    let spinning = false;
+
+    const logo = new Image();
+    logo.src = "logo.png"; // لوگو باید کنار فایل HTML با همین نام باشه
+
+    function drawWheel() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(startAngle);
+
+      for (let i = 0; i < segments.length; i++) {
+        const start = i * anglePerSegment;
+        const end = start + anglePerSegment;
+
+        // رسم قطاع
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, radius, start, end);
+        ctx.fillStyle = `hsl(${(i * 360 / segments.length)}, 85%, 75%)`;
+        ctx.fill();
+        ctx.stroke();
+
+        // متن روی شعاع وسط قطاع
+        ctx.save();
+        ctx.rotate(start + anglePerSegment / 2);
+        ctx.textAlign = "center";
+        ctx.font = "16px Vazirmatn";
+        ctx.fillStyle = "#000";
+        ctx.fillText(segments[i], radius * 0.5, 0);
+        ctx.restore();
+      }
+
+      ctx.restore();
+
+      // حلقه بیرونی
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius + 15, 0, 2 * Math.PI);
+      ctx.strokeStyle = "#ff5722";
+      ctx.lineWidth = 20;
+      ctx.stroke();
+
+      // دایره‌های تزئینی
+      for (let i = 0; i < 12; i++) {
+        const angle = (2 * Math.PI / 12) * i;
+        const dotX = centerX + Math.cos(angle) * (radius + 15);
+        const dotY = centerY + Math.sin(angle) * (radius + 15);
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = "#ffff66";
+        ctx.fill();
+      }
+
+      // لوگو در مرکز
+      if (logo.complete) {
+        ctx.drawImage(logo, centerX - 50, centerY - 50, 100, 100);
+      } else {
+        logo.onload = drawWheel;
+      }
+
+      // نشانگر بالا
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY - radius - 30);
+      ctx.lineTo(centerX - 15, centerY - radius - 10);
+      ctx.lineTo(centerX + 15, centerY - radius - 10);
+      ctx.closePath();
+      ctx.fillStyle = "red";
+      ctx.fill();
+    }
+
+    function spinWheel() {
+      if (spinning) return;
+      spinning = true;
+      spinSound.currentTime = 0;
+      spinSound.play();
+
+      let spinTime = 0;
+      const spinDuration = 5000;
+      const totalRotation = Math.random() * Math.PI * 6 + Math.PI * 6;
+      const start = performance.now();
+
+      function animate(time) {
+        spinTime = time - start;
+        const easeOut = 1 - Math.pow(1 - spinTime / spinDuration, 3);
+        startAngle = easeOut * totalRotation;
+        drawWheel();
+        if (spinTime < spinDuration) {
+          requestAnimationFrame(animate);
+        } else {
+          spinning = false;
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    drawWheel();
+  </script>
+</body>
+</html>
